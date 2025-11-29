@@ -12,7 +12,6 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
   const [camKey, setCamKey] = useState(0);
   const [permissionError, setPermissionError] = useState(false);
 
-  // 📌 Auto ask camera permission + get camera list
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ video: true })
@@ -24,12 +23,16 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
       setDevices(cams);
 
       if (cams.length > 0) {
-        setDeviceId(cams[0].deviceId); // default → first camera
+        // ⭐ If 2 cameras -> pick BACK camera first
+        if (cams.length > 1) {
+          setDeviceId(cams[cams.length - 1].deviceId); // last = BACK camera on phones
+        } else {
+          setDeviceId(cams[0].deviceId);
+        }
       }
     });
   }, []);
 
-  // 🔄 Switch camera
   const switchCamera = () => {
     if (devices.length > 1) {
       const currentIndex = devices.findIndex((d) => d.deviceId === deviceId);
@@ -39,7 +42,6 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
     }
   };
 
-  // 📸 Capture
   const capture = () => {
     const imgSrc = webcamRef.current.getScreenshot();
     setImage(imgSrc);
@@ -51,7 +53,6 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
     });
   };
 
-  // 🔁 Retake
   const retake = () => {
     setImage(null);
     setForm((prev) => ({ ...prev, photo: null }));
@@ -61,7 +62,6 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Camera Preview Box */}
       <div
         className={`w-40 h-40 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all duration-300 ${
           showError
@@ -69,15 +69,12 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
             : "border-sky-400/60"
         }`}
       >
-        {/* Permission Denied Message */}
         {permissionError && (
-          <p className="text-center text-[11px] text-rose-400 px-2">
-            🚫 Camera permission blocked. Go to browser settings → Allow camera
-            → Reload page.
+          <p className="text-[11px] text-rose-300 text-center px-2">
+            🚫 Camera blocked — Allow camera in browser settings & reload
           </p>
         )}
 
-        {/* Live camera feed */}
         {!permissionError && !image && deviceId && (
           <Webcam
             key={camKey}
@@ -89,13 +86,9 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
           />
         )}
 
-        {/* Captured image preview */}
-        {image && (
-          <img src={image} alt="User" className="w-full h-full object-cover" />
-        )}
+        {image && <img src={image} className="w-full h-full object-cover" />}
       </div>
 
-      {/* 🔄 Switch Camera */}
       {!image && devices.length > 1 && !permissionError && (
         <button
           onClick={switchCamera}
@@ -105,14 +98,12 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </button>
       )}
 
-      {/* 📸 Capture / Retake */}
       {!image ? (
         <motion.button
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.05 }}
           onClick={capture}
-          disabled={permissionError}
-          className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm flex items-center gap-1 disabled:bg-gray-500"
+          className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm flex items-center gap-1"
         >
           <FaCamera /> Click Photo
         </motion.button>
@@ -126,7 +117,6 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </motion.button>
       )}
 
-      {/* ❌ Error */}
       {showError && (
         <p className="text-xs text-rose-400 animate-pulse">
           📸 Photo is required
