@@ -1,0 +1,46 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+/* 🚀 Tailwind layers — required */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🌎 Global UI Theme */
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+  }
+
+  .page {
+    @apply min-h-screen p-6 flex items-start justify-center;
+  }
+
+  .card {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 p-6 
+    rounded-3xl shadow-lg shadow-black/40;
+  }
+
+  .submitBtn {
+    @apply w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold
+    py-3 rounded-2xl shadow-xl hover:shadow-sky-500/30 transition-all;
+  }
+}
+
+/* 🌟 Dropdown Scrollbar (Modern Premium Blue Scroll) */
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.6);
+  border-radius: 10px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.85);
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
