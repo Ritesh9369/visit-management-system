@@ -7,16 +7,18 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
   const webcamRef = useRef(null);
   const [image, setImage] = useState(null);
 
-  // FRONT camera default for all devices
+  // Start with front camera
   const [facingMode, setFacingMode] = useState("user");
+  const [camKey, setCamKey] = useState(0); // force reload webcam
 
   const switchCamera = () => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
+    setCamKey((prev) => prev + 1); // refresh webcam component
   };
 
   const videoConstraints = {
     audio: false,
-    video: { facingMode: facingMode }
+    video: { facingMode }
   };
 
   const capture = () => {
@@ -39,7 +41,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Webcam / Preview */}
+      {/* Circle preview */}
       <div
         className={`w-40 h-40 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all duration-300 ${
           showError
@@ -49,6 +51,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
       >
         {!image ? (
           <Webcam
+            key={camKey} // 👈 force reload when switching
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/jpeg"
@@ -60,7 +63,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         )}
       </div>
 
-      {/* 🔄 Switch camera */}
+      {/* Switch Camera */}
       {!image && (
         <button
           onClick={switchCamera}
@@ -70,7 +73,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </button>
       )}
 
-      {/* 📸 Capture / Retake */}
+      {/* Capture / Retake */}
       {!image ? (
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -90,7 +93,6 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </motion.button>
       )}
 
-      {/* ❌ Error */}
       {showError && (
         <p className="text-xs text-rose-400 animate-pulse">
           📸 Photo is required
