@@ -6,26 +6,29 @@ import { FaCamera } from "react-icons/fa";
 const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
   const webcamRef = useRef(null);
   const [image, setImage] = useState(null);
-  const [deviceId, setDeviceId] = useState(null);
+  const [constraints, setConstraints] = useState({
+    audio: false,
+    video: { facingMode: "environment" } // Mobile → back camera by default
+  });
 
-  // Auto select real camera
+  // 🔥 Auto allow camera across all devices
+  const enableCamera = async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: true });
+    } catch (err) {
+      console.log("Camera permission not granted", err);
+    }
+  };
+
   useEffect(() => {
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const videoDevices = devices.filter((d) => d.kind === "videoinput");
-      const preferred =
-        videoDevices.find((d) => !d.label.toLowerCase().includes("virtual")) ||
-        videoDevices[0];
-      setDeviceId(preferred?.deviceId);
-    });
+    enableCamera();
   }, []);
 
-  // 🔥 Take photo & auto remove error instantly
+  // 🚀 Take photo and remove error instantly
   const capture = () => {
     const imgSrc = webcamRef.current.getScreenshot();
     setImage(imgSrc);
     setForm((prev) => ({ ...prev, photo: imgSrc }));
-
-    // remove photo error instantly after clicking
     setErrors((prev) => {
       const u = { ...prev };
       delete u.photo;
@@ -33,7 +36,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
     });
   };
 
-  // 🔁 Retake photo & reset error
+  // 🔁 Retake photo
   const handleRetake = () => {
     setImage(null);
     setForm((prev) => ({ ...prev, photo: null }));
@@ -48,7 +51,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Photo Box */}
+      {/* Photo */}
       <div
         className={`w-40 h-40 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all duration-300
         ${
@@ -58,19 +61,13 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         }`}
       >
         {!image ? (
-          deviceId && (
-            <Webcam
-              key={deviceId}
-              ref={webcamRef}
-              audio={false}
-              screenshotFormat="image/jpeg"
-              videoConstraints={{
-                deviceId: { exact: deviceId },
-                facingMode: "user"
-              }}
-              className="w-full h-full object-cover"
-            />
-          )
+          <Webcam
+            ref={webcamRef}
+            audio={false}
+            screenshotFormat="image/jpeg"
+            videoConstraints={constraints}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
         ) : (
           <img src={image} alt="User" className="w-full h-full object-cover" />
         )}
@@ -96,7 +93,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </motion.button>
       )}
 
-      {/* ❌ Error message */}
+      {/* ❌ Error */}
       {showError && (
         <p className="text-xs text-rose-400 animate-pulse">
           📸 Photo is required
