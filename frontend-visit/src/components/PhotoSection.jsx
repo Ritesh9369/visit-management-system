@@ -7,41 +7,22 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
   const webcamRef = useRef(null);
   const [image, setImage] = useState(null);
 
-  const [devices, setDevices] = useState([]);
-  const [deviceId, setDeviceId] = useState(null);
+  // start with front camera
+  const [facingMode, setFacingMode] = useState("user");
   const [camKey, setCamKey] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [permissionError, setPermissionError] = useState(false);
 
+  // ask permission on page load
   useEffect(() => {
     navigator.mediaDevices
       .getUserMedia({ video: true })
       .then(() => setPermissionError(false))
       .catch(() => setPermissionError(true));
-
-    navigator.mediaDevices.enumerateDevices().then((mediaDevices) => {
-      const cams = mediaDevices.filter((d) => d.kind === "videoinput");
-      setDevices(cams);
-
-      if (cams.length > 0) {
-        // FIRST TRY camera with label containing "back"
-        const backCam = cams.find((c) =>
-          c.label.toLowerCase().includes("back")
-        );
-        setDeviceId(backCam ? backCam.deviceId : cams[0].deviceId);
-      }
-
-      setTimeout(() => setLoading(false), 500);
-    });
   }, []);
 
   const switchCamera = () => {
-    if (devices.length > 1) {
-      const currentIndex = devices.findIndex((d) => d.deviceId === deviceId);
-      const nextIndex = (currentIndex + 1) % devices.length;
-      setDeviceId(devices[nextIndex].deviceId);
-      setCamKey((prev) => prev + 1);
-    }
+    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
+    setCamKey((prev) => prev + 1); // reload webcam
   };
 
   const capture = () => {
@@ -55,44 +36,42 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
     });
   };
 
-  const retake = () => setImage(null);
+  const retake = () => {
+    setImage(null);
+    setForm((prev) => ({ ...prev, photo: null }));
+  };
 
   const showError = forceTouched && errors?.photo;
 
   return (
     <div className="flex flex-col items-center gap-3">
       <div
-        className={`w-40 h-40 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all duration-300 ${
+        className={`w-40 h-40 rounded-full overflow-hidden flex items-center justify-center border-2 ${
           showError
             ? "border-rose-500 shadow-[0_0_12px_rgba(255,80,80,0.45)]"
             : "border-sky-400/60"
         }`}
       >
-        {loading && (
-          <p className="text-[11px] text-gray-300">⏳ Loading camera...</p>
-        )}
-
-        {permissionError && (
+        {permissionError ? (
           <p className="text-[11px] text-rose-400 text-center px-2">
-            🚫 Camera blocked — Allow camera & reload page
+            🚫 Camera blocked — Allow camera & refresh page
           </p>
-        )}
-
-        {!permissionError && !loading && !image && deviceId && (
+        ) : !image ? (
           <Webcam
             key={camKey}
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/jpeg"
-            videoConstraints={{ deviceId }}
+            videoConstraints={{ facingMode }}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
+        ) : (
+          <img src={image} alt="User" className="w-full h-full object-cover" />
         )}
-
-        {image && <img src={image} className="w-full h-full object-cover" />}
       </div>
 
-      {!image && devices.length > 1 && !permissionError && (
+      {/* Switch button visible only when camera ON */}
+      {!image && !permissionError && (
         <button
           onClick={switchCamera}
           className="px-3 py-1 rounded-lg bg-gray-700 text-white text-[11px]"
@@ -106,8 +85,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.05 }}
           onClick={capture}
-          disabled={permissionError}
-          className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm flex items-center gap-1 disabled:bg-gray-500"
+          className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm flex items-center gap-1"
         >
           <FaCamera /> Click Photo
         </motion.button>
