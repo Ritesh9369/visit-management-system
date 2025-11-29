@@ -1,4 +1,6 @@
 // ⭐ FINAL VISITOR FORM with FULL VALIDATION (Photo Required + Aadhaar + All Fields)
+import.meta.env.VITE_API_BASE_URL;
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -84,13 +86,14 @@ const VisitorForm = () => {
       const passId = "PASS-" + Math.floor(100000 + Math.random() * 900000);
 
       const response = await fetch(
-        "http://localhost:5000/api/visitors/register",
+        `${import.meta.env.VITE_API_BASE_URL}/visitors/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...form, passId })
         }
       );
+
 
       const result = await response.json();
 
