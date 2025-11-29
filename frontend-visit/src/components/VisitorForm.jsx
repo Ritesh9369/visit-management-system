@@ -32,7 +32,6 @@ const VisitorForm = () => {
   const [forceTouched, setForceTouched] = useState(false);
   const [shakeTrigger, setShakeTrigger] = useState(false);
 
-  // Live error hiding while typing
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((p) => ({ ...p, [name]: value }));
@@ -50,7 +49,6 @@ const VisitorForm = () => {
     });
   };
 
-  // 🔥 FINAL strict validation
   const validate = () => {
     const e = {};
 
@@ -84,8 +82,9 @@ const VisitorForm = () => {
     try {
       const passId = "PASS-" + Math.floor(100000 + Math.random() * 900000);
 
+      // 🚀 FINAL CORRECT BACKEND URL — without `/api`
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/visitors/register`,
+        `${import.meta.env.VITE_API_BASE_URL}/visitors/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -107,7 +106,6 @@ const VisitorForm = () => {
         setSuccessMsg(`Pass Generated Successfully — ID: ${passId}`);
         setTimeout(() => setSuccessMsg(""), 4000);
 
-        // RESET FORM
         setForm({
           name: "",
           phone: "",
@@ -130,7 +128,6 @@ const VisitorForm = () => {
 
   return (
     <div className="page relative">
-      {/* Success Popup */}
       <AnimatePresence>
         {successMsg && (
           <motion.div
@@ -147,7 +144,6 @@ const VisitorForm = () => {
 
       <div className="grid lg:grid-cols-[2fr,1.4fr] gap-6 w-full max-w-6xl mx-auto select-none">
         <div className="space-y-6">
-          {/* Error Banner */}
           {forceTouched && Object.keys(errors).length > 0 && (
             <motion.div animate={shakeTrigger ? shake : {}}>
               <div className="bg-red-500/15 border border-red-400 text-red-300 text-[14px] px-5 py-3 rounded-xl shadow font-medium">
@@ -158,10 +154,8 @@ const VisitorForm = () => {
           )}
 
           <Header />
-
           <motion.div className="card">
             <div className="flex flex-col md:flex-row gap-6">
-              {/* Photo */}
               <PhotoSection
                 {...{ form, setForm, forceTouched, errors, setErrors }}
               />
@@ -181,9 +175,9 @@ const VisitorForm = () => {
               whileTap={{ scale: 0.96 }}
               disabled={isSubmitting}
               className="w-full py-4 rounded-2xl font-semibold tracking-wide text-[17px]
-                bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-[0_0_15px_rgba(0,160,255,0.28)]
-                hover:shadow-[0_0_28px_rgba(0,200,255,0.55)] hover:brightness-110 transition-all duration-200
-                cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-[0_0_15px_rgba(0,160,255,0.28)]
+              hover:shadow-[0_0_28px_rgba(0,200,255,0.55)] hover:brightness-110 transition-all duration-200
+              cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting
                 ? "Saving & Generating Pass..."
