@@ -1,4 +1,4 @@
-// ⭐ FINAL VISITOR FORM with FULL VALIDATION (Photo Required + Aadhaar + All Fields)
+// ⭐ FINAL VISITOR FORM with FULL VALIDATION + LIVE BACKEND CONNECTED
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -82,7 +82,6 @@ const VisitorForm = () => {
     try {
       const passId = "PASS-" + Math.floor(100000 + Math.random() * 900000);
 
-      // 🚀 FINAL CORRECT BACKEND URL — without `/api`
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/visitors/register`,
         {
