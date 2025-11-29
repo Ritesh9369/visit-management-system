@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
 import { motion } from "framer-motion";
 import { FaCamera } from "react-icons/fa";
@@ -7,20 +7,39 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
   const webcamRef = useRef(null);
   const [image, setImage] = useState(null);
 
-  // Start with front camera
-  const [facingMode, setFacingMode] = useState("user");
-  const [camKey, setCamKey] = useState(0); // force reload webcam
+  const [devices, setDevices] = useState([]);
+  const [deviceId, setDeviceId] = useState(null);
+  const [camKey, setCamKey] = useState(0);
+  const [permissionError, setPermissionError] = useState(false);
 
+  // 📌 Auto ask camera permission + get camera list
+  useEffect(() => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then(() => setPermissionError(false))
+      .catch(() => setPermissionError(true));
+
+    navigator.mediaDevices.enumerateDevices().then((mediaDevices) => {
+      const cams = mediaDevices.filter((d) => d.kind === "videoinput");
+      setDevices(cams);
+
+      if (cams.length > 0) {
+        setDeviceId(cams[0].deviceId); // default → first camera
+      }
+    });
+  }, []);
+
+  // 🔄 Switch camera
   const switchCamera = () => {
-    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
-    setCamKey((prev) => prev + 1); // refresh webcam component
+    if (devices.length > 1) {
+      const currentIndex = devices.findIndex((d) => d.deviceId === deviceId);
+      const nextIndex = (currentIndex + 1) % devices.length;
+      setDeviceId(devices[nextIndex].deviceId);
+      setCamKey((prev) => prev + 1);
+    }
   };
 
-  const videoConstraints = {
-    audio: false,
-    video: { facingMode }
-  };
-
+  // 📸 Capture
   const capture = () => {
     const imgSrc = webcamRef.current.getScreenshot();
     setImage(imgSrc);
@@ -32,6 +51,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
     });
   };
 
+  // 🔁 Retake
   const retake = () => {
     setImage(null);
     setForm((prev) => ({ ...prev, photo: null }));
@@ -41,7 +61,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Circle preview */}
+      {/* Camera Preview Box */}
       <div
         className={`w-40 h-40 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all duration-300 ${
           showError
@@ -49,22 +69,34 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
             : "border-sky-400/60"
         }`}
       >
-        {!image ? (
+        {/* Permission Denied Message */}
+        {permissionError && (
+          <p className="text-center text-[11px] text-rose-400 px-2">
+            🚫 Camera permission blocked. Go to browser settings → Allow camera
+            → Reload page.
+          </p>
+        )}
+
+        {/* Live camera feed */}
+        {!permissionError && !image && deviceId && (
           <Webcam
-            key={camKey} // 👈 force reload when switching
+            key={camKey}
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/jpeg"
-            videoConstraints={videoConstraints}
+            videoConstraints={{ deviceId }}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
-        ) : (
+        )}
+
+        {/* Captured image preview */}
+        {image && (
           <img src={image} alt="User" className="w-full h-full object-cover" />
         )}
       </div>
 
-      {/* Switch Camera */}
-      {!image && (
+      {/* 🔄 Switch Camera */}
+      {!image && devices.length > 1 && !permissionError && (
         <button
           onClick={switchCamera}
           className="px-3 py-1 rounded-lg bg-gray-700 text-white text-[11px]"
@@ -73,13 +105,14 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </button>
       )}
 
-      {/* Capture / Retake */}
+      {/* 📸 Capture / Retake */}
       {!image ? (
         <motion.button
           whileTap={{ scale: 0.9 }}
           whileHover={{ scale: 1.05 }}
           onClick={capture}
-          className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm flex items-center gap-1"
+          disabled={permissionError}
+          className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm flex items-center gap-1 disabled:bg-gray-500"
         >
           <FaCamera /> Click Photo
         </motion.button>
@@ -93,6 +126,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </motion.button>
       )}
 
+      {/* ❌ Error */}
       {showError && (
         <p className="text-xs text-rose-400 animate-pulse">
           📸 Photo is required
