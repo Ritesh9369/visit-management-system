@@ -1,5 +1,4 @@
 // ⭐ FINAL VISITOR FORM with FULL VALIDATION (Photo Required + Aadhaar + All Fields)
-import.meta.env.VITE_API_BASE_URL;
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -86,14 +85,13 @@ const VisitorForm = () => {
       const passId = "PASS-" + Math.floor(100000 + Math.random() * 900000);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/visitors/register`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/visitors/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...form, passId })
         }
       );
-
 
       const result = await response.json();
 
@@ -163,7 +161,7 @@ const VisitorForm = () => {
 
           <motion.div className="card">
             <div className="flex flex-col md:flex-row gap-6">
-              {/* 📌 setErrors pass karna IMPORTANT hai photo validation auto remove ke liye */}
+              {/* Photo */}
               <PhotoSection
                 {...{ form, setForm, forceTouched, errors, setErrors }}
               />
