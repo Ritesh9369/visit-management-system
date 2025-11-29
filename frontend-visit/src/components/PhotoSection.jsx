@@ -1,34 +1,30 @@
 import { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
 import { motion } from "framer-motion";
-import { FaCamera } from "react-icons/fa";
+import { FaCamera, FaSync } from "react-icons/fa";
 
 const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
   const webcamRef = useRef(null);
   const [image, setImage] = useState(null);
-  const [constraints, setConstraints] = useState({
-    audio: false,
-    video: { facingMode: "environment" } // Mobile → back camera by default
-  });
 
-  // 🔥 Auto allow camera across all devices
-  const enableCamera = async () => {
-    try {
-      await navigator.mediaDevices.getUserMedia({ video: true });
-    } catch (err) {
-      console.log("Camera permission not granted", err);
-    }
-  };
+  // by default mobile → back camera, laptop → front
+  const [facingMode, setFacingMode] = useState("user");
 
   useEffect(() => {
-    enableCamera();
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (isMobile) setFacingMode("environment"); // mobile -> back camera
   }, []);
 
-  // 🚀 Take photo and remove error instantly
+  const videoConstraints = {
+    audio: false,
+    video: { facingMode }
+  };
+
   const capture = () => {
     const imgSrc = webcamRef.current.getScreenshot();
     setImage(imgSrc);
     setForm((prev) => ({ ...prev, photo: imgSrc }));
+
     setErrors((prev) => {
       const u = { ...prev };
       delete u.photo;
@@ -36,22 +32,19 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
     });
   };
 
-  // 🔁 Retake photo
   const handleRetake = () => {
     setImage(null);
     setForm((prev) => ({ ...prev, photo: null }));
-    setErrors((prev) => {
-      const u = { ...prev };
-      delete u.photo;
-      return u;
-    });
+  };
+
+  const toggleCamera = () => {
+    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };
 
   const showError = forceTouched && errors?.photo;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      {/* Photo */}
+    <div className="flex flex-col items-center gap-3 select-none">
       <div
         className={`w-40 h-40 rounded-full overflow-hidden flex items-center justify-center border-2 transition-all duration-300
         ${
@@ -65,7 +58,7 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/jpeg"
-            videoConstraints={constraints}
+            videoConstraints={videoConstraints}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
@@ -73,7 +66,18 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         )}
       </div>
 
-      {/* Buttons */}
+      {/* 🔁 Switch Camera (Only when photo is not clicked) */}
+      {!image && (
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleCamera}
+          className="px-3 py-1 bg-gray-600 text-white rounded-md text-xs flex items-center gap-1"
+        >
+          <FaSync /> Switch Camera
+        </motion.button>
+      )}
+
+      {/* 📸 Capture / Retake */}
       {!image ? (
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -93,7 +97,6 @@ const PhotoSection = ({ form, setForm, forceTouched, errors, setErrors }) => {
         </motion.button>
       )}
 
-      {/* ❌ Error */}
       {showError && (
         <p className="text-xs text-rose-400 animate-pulse">
           📸 Photo is required
