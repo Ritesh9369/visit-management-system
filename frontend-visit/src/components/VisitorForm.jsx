@@ -91,6 +91,12 @@ const VisitorForm = () => {
         }
       );
 
+      // ⭐ FIX — backend warm-up JSON error
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Server responded: ${text}`);
+      }
+
       const result = await response.json();
 
       if (result.success) {
